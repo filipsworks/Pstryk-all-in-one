@@ -23,7 +23,7 @@ Integracja Home Assistant dla serwisu Pstryk.pl, zapewniająca dostęp do danych
 2.  W Home Assistant przejdź do HACS -> Integracje.
 3.  Dodaj to repozytorium jako niestandardowe repozytorium:
     *   W HACS -> Integracje, kliknij trzy kropki w prawym górnym rogu i wybierz "Niestandardowe repozytoria".
-    *   Wklej URL tego repozytorium: `https://github.com/kubass4/Pstryk-all-in-one`
+    *   Wklej URL tego repozytorium: `https://github.com/szkocot/Pstryk-all-in-one`
     *   Wybierz kategorię "Integracja".
     *   Kliknij "Dodaj".
 4.  Znajdź "Pstryk AIO" na liście i kliknij "Zainstaluj".
@@ -77,11 +77,11 @@ Integracja tworzy następujące sensory:
 
 ## Wsparcie
 
-Jeśli napotkasz problemy, otwórz zgłoszenie (issue) w tym repozytorium: `https://github.com/kubass4/Pstryk-all-in-one/issues`.
+Jeśli napotkasz problemy, otwórz zgłoszenie (issue) w tym repozytorium: `https://github.com/szkocot/Pstryk-all-in-one/issues`.
 
 ## Autor
 
-kubass4
+szkocot
 
 ## Licencja
 
