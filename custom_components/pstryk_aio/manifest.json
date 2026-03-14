@@ -1,17 +1,17 @@
 {
   "domain": "pstryk_aio",
   "name": "Pstryk AiO",
+  "after_dependencies": [],
+  "codeowners": [
+    "@szkocot"
+  ],
+  "config_flow": true,
+  "dependencies": [],
   "documentation": "https://github.com/szkocot/Pstryk-all-in-one",
+  "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/szkocot/Pstryk-all-in-one/issues",
   "requirements": [
     "aiohttp>=3.9.0"
   ],
-  "codeowners": [
-    "@szkocot"
-  ],
-  "iot_class": "cloud_polling",
-  "version": "0.1.4",
-  "config_flow": true,
-  "dependencies": [],
-  "after_dependencies": []
+  "version": "0.1.4"
 }
