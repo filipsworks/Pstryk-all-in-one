@@ -11,6 +11,8 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.device_registry import DeviceEntryType
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
@@ -182,7 +184,14 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
         self._attr_native_unit_of_measurement = unit_of_measurement
         self._attr_icon = icon
         self._attr_extra_state_attributes = {}
-        self._attr_device_info = None
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry_id)},
+            name=config_entry_title or DEFAULT_NAME,
+            manufacturer="Pstryk",
+            model="AiO",
+            entry_type=DeviceEntryType.SERVICE,
+            configuration_url="https://app.pstryk.pl",
+        )
         self._update_state() 
 
     async def async_added_to_hass(self) -> None:
