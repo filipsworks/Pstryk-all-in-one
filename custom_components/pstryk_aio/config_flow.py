@@ -16,15 +16,7 @@ from .api import PstrykApiClientApiKey, PstrykAuthError, PstrykApiError
 from .const import (
     DOMAIN,
     DEFAULT_NAME,
-    CONF_CHEAP_PURCHASE_PRICE_THRESHOLD,
-    CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD,
-    CONF_CHEAP_SALE_PRICE_THRESHOLD,
-    CONF_EXPENSIVE_SALE_PRICE_THRESHOLD,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
-    DEFAULT_CHEAP_PURCHASE_PRICE_THRESHOLD,
-    DEFAULT_EXPENSIVE_PURCHASE_PRICE_THRESHOLD,
-    DEFAULT_CHEAP_SALE_PRICE_THRESHOLD,
-    DEFAULT_EXPENSIVE_SALE_PRICE_THRESHOLD,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,7 +45,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: config_entries.
 class PstrykConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Obsługuje przepływ konfiguracji Pstryk AIO z Kluczem API."""
 
-    VERSION = 7 # Zwiększona wersja dla zmian w nazewnictwie
+    VERSION = 7
     CONNECTION_CLASS = config_entries.CONN_CLASS_CLOUD_POLL
 
     def __init__(self) -> None:
@@ -139,23 +131,21 @@ class PstrykConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_options(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Obsługuje krok opcji podczas początkowej konfiguracji."""
         errors: Dict[str, str] = {}
-    
+
         if user_input is not None:
-            # No validation needed since we're removing thresholds
             return self.async_create_entry(
                 title=self._flow_data["title"], 
                 data={CONF_API_KEY: self._flow_data[CONF_API_KEY]}, 
                 options=user_input
             )
-    
-        # Show the form with only update_interval
+
         options_schema_dict = {
             vol.Optional(
                 "update_interval", 
                 default=DEFAULT_UPDATE_INTERVAL_MINUTES
             ): vol.Coerce(int)
         }
-    
+
         return self.async_show_form(
             step_id="options", data_schema=vol.Schema(options_schema_dict), errors=errors
         )
