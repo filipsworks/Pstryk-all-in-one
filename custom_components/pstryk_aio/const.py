@@ -4,13 +4,13 @@ DOMAIN = "pstryk_aio"
 PLATFORMS = ["sensor"] 
 # --- Konfiguracja ---
 CONF_API_KEY = "api_key" # Dla Klucza API
-CONF_CHEAP_PURCHASE_PRICE_THRESHOLD = "cheap_purchase_price_threshold"
-CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD = "expensive_purchase_price_threshold"
-CONF_CHEAP_SALE_PRICE_THRESHOLD = "cheap_sale_price_threshold"
-CONF_EXPENSIVE_SALE_PRICE_THRESHOLD = "expensive_sale_price_threshold"
+# CONF_CHEAP_PURCHASE_PRICE_THRESHOLD = "cheap_purchase_price_threshold"
+# CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD = "expensive_purchase_price_threshold"
+# CONF_CHEAP_SALE_PRICE_THRESHOLD = "cheap_sale_price_threshold"
+# CONF_EXPENSIVE_SALE_PRICE_THRESHOLD = "expensive_sale_price_threshold"
 
-CONF_CHEAP_PRICE_THRESHOLD = "cheap_price_threshold" 
-CONF_EXPENSIVE_PRICE_THRESHOLD = "expensive_price_threshold"
+# CONF_CHEAP_PRICE_THRESHOLD = "cheap_price_threshold" 
+# CONF_EXPENSIVE_PRICE_THRESHOLD = "expensive_price_threshold"
 # Domyślne wartości
 DEFAULT_NAME = "Pstryk AIO"
 DEFAULT_UPDATE_INTERVAL_MINUTES = 15
