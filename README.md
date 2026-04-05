@@ -80,6 +80,7 @@ Jeśli napotkasz problemy, otwórz zgłoszenie (issue) w tym repozytorium: `http
 ## Autor
 
 szkocot
+Zmiana by używać flag pstryka is_cheap/is_expensive zamiast twardo ustalonych wartości - filipsworks
 
 ## Licencja
 
