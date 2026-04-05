@@ -137,109 +137,47 @@ class PstrykConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_options(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        """Obsługuje krok opcji podczas początkowej konfiguracji."""
+    """Obsługuje krok opcji podczas początkowej konfiguracji."""
         errors: Dict[str, str] = {}
-
+    
         if user_input is not None:
-            cheap_purchase = user_input.get(CONF_CHEAP_PURCHASE_PRICE_THRESHOLD)
-            expensive_purchase = user_input.get(CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD)
-            if cheap_purchase is not None and expensive_purchase is not None and \
-               expensive_purchase <= cheap_purchase:
-                errors["base"] = "invalid_purchase_thresholds"
-            
-            cheap_sale = user_input.get(CONF_CHEAP_SALE_PRICE_THRESHOLD)
-            expensive_sale = user_input.get(CONF_EXPENSIVE_SALE_PRICE_THRESHOLD)
-            if cheap_sale is not None and expensive_sale is not None and \
-               expensive_sale <= cheap_sale:
-                if "base" not in errors:
-                    errors["base"] = "invalid_sale_thresholds"
-                else:
-                    _LOGGER.debug("Multiple threshold errors, reporting first one: invalid_purchase_thresholds")
-            if not errors:
-                return self.async_create_entry(
-                    title=self._flow_data["title"], 
-                    data={CONF_API_KEY: self._flow_data[CONF_API_KEY]}, 
-                    options=user_input
-                )
-
-        # Show the form for the first time
+            # No validation needed since we're removing thresholds
+            return self.async_create_entry(
+                title=self._flow_data["title"], 
+                data={CONF_API_KEY: self._flow_data[CONF_API_KEY]}, 
+                options=user_input
+            )
+    
+        # Show the form with only update_interval
         options_schema_dict = {
-            vol.Optional(
-                CONF_CHEAP_PURCHASE_PRICE_THRESHOLD, 
-                default=DEFAULT_CHEAP_PURCHASE_PRICE_THRESHOLD
-            ): vol.Coerce(float),
-            vol.Optional(
-                CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD, 
-                default=DEFAULT_EXPENSIVE_PURCHASE_PRICE_THRESHOLD
-            ): vol.Coerce(float),
-            vol.Optional(
-                CONF_CHEAP_SALE_PRICE_THRESHOLD, 
-                default=DEFAULT_CHEAP_SALE_PRICE_THRESHOLD
-            ): vol.Coerce(float),
-            vol.Optional(
-                CONF_EXPENSIVE_SALE_PRICE_THRESHOLD, 
-                default=DEFAULT_EXPENSIVE_SALE_PRICE_THRESHOLD
-            ): vol.Coerce(float),
             vol.Optional(
                 "update_interval", 
                 default=DEFAULT_UPDATE_INTERVAL_MINUTES
             ): vol.Coerce(int)
         }
-        if user_input:
-            options_schema_dict = {
-                key: vol.Optional(key, default=user_input.get(key, default_val.default))
-                for key, default_val in options_schema_dict.items()
-            }
-
+    
         return self.async_show_form(
             step_id="options", data_schema=vol.Schema(options_schema_dict), errors=errors
         )
 
+
 class PstrykOptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         """Inicjalizacja przepływu opcji."""
+        self.config_entry = config_entry
 
     async def async_step_init(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-        errors: Dict[str, str] = {}
+        """Obsługuje inicjalizację opcji."""
         if user_input is not None:
-            cheap_purchase = user_input.get(CONF_CHEAP_PURCHASE_PRICE_THRESHOLD)
-            expensive_purchase = user_input.get(CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD)
-            if cheap_purchase is not None and expensive_purchase is not None and \
-               expensive_purchase <= cheap_purchase:
-                errors["base"] = "invalid_purchase_thresholds"
-            else:
-                cheap_sale = user_input.get(CONF_CHEAP_SALE_PRICE_THRESHOLD)
-                expensive_sale = user_input.get(CONF_EXPENSIVE_SALE_PRICE_THRESHOLD)
-                if cheap_sale is not None and expensive_sale is not None and \
-                   expensive_sale <= cheap_sale:
-                    errors["base"] = "invalid_sale_thresholds"
-            
-            if not errors:
-                return self.async_create_entry(title="", data=user_input)
+            return self.async_create_entry(title="", data=user_input)
 
         current_options = self.config_entry.options
         options_schema_dict = {
-            vol.Optional(
-                CONF_CHEAP_PURCHASE_PRICE_THRESHOLD, 
-                default=current_options.get(CONF_CHEAP_PURCHASE_PRICE_THRESHOLD, DEFAULT_CHEAP_PURCHASE_PRICE_THRESHOLD)
-            ): vol.Coerce(float),
-            vol.Optional(
-                CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD, 
-                default=current_options.get(CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD, DEFAULT_EXPENSIVE_PURCHASE_PRICE_THRESHOLD)
-            ): vol.Coerce(float),
-            vol.Optional(
-                CONF_CHEAP_SALE_PRICE_THRESHOLD, 
-                default=current_options.get(CONF_CHEAP_SALE_PRICE_THRESHOLD, DEFAULT_CHEAP_SALE_PRICE_THRESHOLD)
-            ): vol.Coerce(float),
-            vol.Optional(
-                CONF_EXPENSIVE_SALE_PRICE_THRESHOLD, 
-                default=current_options.get(CONF_EXPENSIVE_SALE_PRICE_THRESHOLD, DEFAULT_EXPENSIVE_SALE_PRICE_THRESHOLD)
-            ): vol.Coerce(float),
             vol.Optional(
                 "update_interval", 
                 default=current_options.get("update_interval", DEFAULT_UPDATE_INTERVAL_MINUTES)
             ): vol.Coerce(int)
         }
         return self.async_show_form(
-            step_id="init", data_schema=vol.Schema(options_schema_dict), errors=errors
+            step_id="init", data_schema=vol.Schema(options_schema_dict), errors={}
         )
