@@ -137,7 +137,7 @@ class PstrykConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_options(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
-    """Obsługuje krok opcji podczas początkowej konfiguracji."""
+        """Obsługuje krok opcji podczas początkowej konfiguracji."""
         errors: Dict[str, str] = {}
     
         if user_input is not None:
