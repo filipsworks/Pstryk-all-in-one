@@ -261,19 +261,18 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
         return None
 
     def _format_price_frames_for_attributes(
-        self, 
-        pricing_data: Optional[Dict[str, Any]],
-        cheap_threshold: Optional[float],
-        expensive_threshold: Optional[float]
+    self, 
+    pricing_data: Optional[Dict[str, Any]],
+    cheap_threshold: Optional[float],
+    expensive_threshold: Optional[float]
     ) -> List[Dict[str, Any]]:
-        """Formatuje ramki cenowe do atrybutów, konwertując czas na lokalny i upraszczając pola."""
+        """Formatuje ramki cenowe do atrybutów, używając flag is_cheap i is_expensive z API."""
         formatted_frames = []
         if not pricing_data or not isinstance(pricing_data.get("frames"), list):
             return formatted_frames
-
-        _LOGGER.debug(f"({self.name}) Formatowanie ramek cenowych z progami: Tani={cheap_threshold}, Drogi={expensive_threshold}")
-
-
+    
+        _LOGGER.debug(f"({self.name}) Formatowanie ramek cenowych, używanie flag is_cheap/is_expensive z API")
+    
         for frame in pricing_data["frames"]:
             try:
                 start_local_str = None
@@ -290,17 +289,12 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     end_utc_dt = dt_util.parse_datetime(end_utc_str)
                     if end_utc_dt:
                         end_local_str = dt_util.as_local(end_utc_dt).isoformat(timespec='seconds')
-
+    
                 price_value = frame.get(ATTR_PRICE_VALUE_GROSS)
-                is_cheap_flag = False
-                is_expensive_flag = False
-
-                if price_value is not None:
-                    if cheap_threshold is not None and price_value <= cheap_threshold:
-                        is_cheap_flag = True
-                    if expensive_threshold is not None and price_value >= expensive_threshold:
-                        is_expensive_flag = True
-
+                # Use API-provided flags instead of thresholds
+                is_cheap_flag = frame.get("is_cheap", False)
+                is_expensive_flag = frame.get("is_expensive", False)
+    
                 frame_info = {
                     "start": start_local_str, 
                     "end": end_local_str,     
