@@ -42,10 +42,6 @@ from .const import (
     FRIENDLY_NAME_SALE_PRICE,
     FRIENDLY_NAME_CONSUMPTION_DAILY_COST,
     FRIENDLY_NAME_PRODUCTION_DAILY_YIELD,
-    CONF_CHEAP_PURCHASE_PRICE_THRESHOLD,
-    CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD,
-    CONF_CHEAP_SALE_PRICE_THRESHOLD,
-    CONF_EXPENSIVE_SALE_PRICE_THRESHOLD,
     ATTR_PRICE_TODAY,
     ATTR_PRICE_TOMORROW,
     ATTR_PRICE_START_TIME,
@@ -77,13 +73,9 @@ from .const import (
     USAGE_MONTHLY_RAE,
     USAGE_MONTHLY_FAE_COST,
     USAGE_MONTHLY_RAE_YIELD,
-    COST_FRAME_FAE_COST, # Zmieniony import
-    COST_FRAME_RAE_YIELD, # Zmieniony import
+    COST_FRAME_FAE_COST,
+    COST_FRAME_RAE_YIELD,
     COST_FRAME_ENERGY_BALANCE_VALUE,
-    DEFAULT_CHEAP_PURCHASE_PRICE_THRESHOLD,
-    DEFAULT_EXPENSIVE_PURCHASE_PRICE_THRESHOLD,
-    DEFAULT_CHEAP_SALE_PRICE_THRESHOLD,
-    DEFAULT_EXPENSIVE_SALE_PRICE_THRESHOLD,
     FRIENDLY_NAME_BILLING_BALANCE_MONTHLY_PLN,
     FRIENDLY_NAME_ENERGY_BALANCE_MONTHLY_KWH,
     FRIENDLY_NAME_BILLING_BALANCE_DAILY_PLN,
@@ -102,9 +94,10 @@ from .const import (
     FRIENDLY_NAME_PRODUCTION_MONTHLY_KWH,
     FRIENDLY_NAME_CONSUMPTION_MONTHLY_COST_PLN,
     FRIENDLY_NAME_PRODUCTION_MONTHLY_YIELD_PLN,
+    ATTR_LAST_MONTH_VALUE,
 )
-from .const import ATTR_LAST_MONTH_VALUE # Dodano import dla nowego atrybutu
 from homeassistant.helpers.event import async_track_time_change
+
 _LOGGER = logging.getLogger(__name__)
 
 SENSOR_DESCRIPTIONS_MAP = {
@@ -238,8 +231,8 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
 
         for frame in pricing_data["frames"]:
             try:
-                start_time_str = frame.get(ATTR_PRICE_START_TIME)  # Powinno być "start"
-                end_time_str = frame.get(ATTR_PRICE_END_TIME)      # Powinno być "end"
+                start_time_str = frame.get(ATTR_PRICE_START_TIME)
+                end_time_str = frame.get(ATTR_PRICE_END_TIME)
                 
                 if not start_time_str or not end_time_str:
                     _LOGGER.debug(f"({self.name}) Skipping frame with missing start/end time: {frame}")
@@ -261,18 +254,18 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
         return None
 
     def _format_price_frames_for_attributes(
-    self, 
-    pricing_data: Optional[Dict[str, Any]],
-    cheap_threshold: Optional[float],
-    expensive_threshold: Optional[float]
+        self, 
+        pricing_data: Optional[Dict[str, Any]],
+        cheap_threshold: Optional[float] = None,
+        expensive_threshold: Optional[float] = None
     ) -> List[Dict[str, Any]]:
         """Formatuje ramki cenowe do atrybutów, używając flag is_cheap i is_expensive z API."""
         formatted_frames = []
         if not pricing_data or not isinstance(pricing_data.get("frames"), list):
             return formatted_frames
-    
+
         _LOGGER.debug(f"({self.name}) Formatowanie ramek cenowych, używanie flag is_cheap/is_expensive z API")
-    
+
         for frame in pricing_data["frames"]:
             try:
                 start_local_str = None
@@ -289,12 +282,12 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     end_utc_dt = dt_util.parse_datetime(end_utc_str)
                     if end_utc_dt:
                         end_local_str = dt_util.as_local(end_utc_dt).isoformat(timespec='seconds')
-    
+
                 price_value = frame.get(ATTR_PRICE_VALUE_GROSS)
                 # Use API-provided flags instead of thresholds
                 is_cheap_flag = frame.get("is_cheap", False)
                 is_expensive_flag = frame.get("is_expensive", False)
-    
+
                 frame_info = {
                     "start": start_local_str, 
                     "end": end_local_str,     
@@ -481,21 +474,10 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
         new_value: Any = None 
         attributes = {ATTR_DATA_TIMESTAMP: last_api_update}
 
-        options = self.coordinator.config_entry.options
-        cheap_purchase_thresh = options.get(CONF_CHEAP_PURCHASE_PRICE_THRESHOLD, DEFAULT_CHEAP_PURCHASE_PRICE_THRESHOLD)
-        expensive_purchase_thresh = options.get(CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD, DEFAULT_EXPENSIVE_PURCHASE_PRICE_THRESHOLD)
-        cheap_sale_thresh = options.get(CONF_CHEAP_SALE_PRICE_THRESHOLD, DEFAULT_CHEAP_SALE_PRICE_THRESHOLD)
-        expensive_sale_thresh = options.get(CONF_EXPENSIVE_SALE_PRICE_THRESHOLD, DEFAULT_EXPENSIVE_SALE_PRICE_THRESHOLD)
-
         now_local = dt_util.now()
         current_month_dt = now_local.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         # Oblicz pierwszy dzień poprzedniego miesiąca dla agregacji
         previous_month_target_dt = (current_month_dt - timedelta(days=1)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-
-        current_cheap_thresh = None
-        current_expensive_thresh = None
-
 
         try:
             if self._sensor_key == SENSOR_TODAY_PURCHASE_PRICE:
@@ -511,10 +493,8 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     _LOGGER.debug(f"({self.name}) Nie znaleziono aktualnej ramki cenowej dla ceny zakupu.")
                     new_value = None
                 
-                current_cheap_thresh = cheap_purchase_thresh
-                current_expensive_thresh = expensive_purchase_thresh
                 attributes[ATTR_PRICE_TODAY] = self._format_price_frames_for_attributes(
-                    pricing_purchase_today, current_cheap_thresh, current_expensive_thresh
+                    pricing_purchase_today, None, None
                 )
                 avg_price_today = self._calculate_average_price(pricing_purchase_today)
                 if avg_price_today is not None:
@@ -535,7 +515,7 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     else:
                         new_value = None
                     attributes[ATTR_PRICE_TOMORROW] = self._format_price_frames_for_attributes(
-                        pricing_purchase_tomorrow, cheap_purchase_thresh, expensive_purchase_thresh
+                        pricing_purchase_tomorrow, None, None
                     )
                 else:
                     new_value = None
@@ -543,7 +523,6 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     _LOGGER.debug(f"({self.name}) Brak danych o cenach zakupu na jutro, ustawiam stan na None i komunikat w atrybutach.")
                 if has_real_data_tomorrow and (avg_price_tomorrow := self._calculate_average_price(pricing_purchase_tomorrow)) is not None:
                     attributes[f"{ATTR_AVERAGE_PRICE}_tomorrow"] = avg_price_tomorrow
-
 
             elif self._sensor_key == SENSOR_TODAY_SALE_PRICE:
                 current_frame = self._get_current_price_frame(pricing_prosumer_today)
@@ -558,10 +537,8 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     _LOGGER.debug(f"({self.name}) Nie znaleziono aktualnej ramki cenowej dla ceny sprzedaży.")
                     new_value = None
                 
-                current_cheap_thresh = cheap_sale_thresh
-                current_expensive_thresh = expensive_sale_thresh
                 attributes[ATTR_PRICE_TODAY] = self._format_price_frames_for_attributes(
-                    pricing_prosumer_today, current_cheap_thresh, current_expensive_thresh
+                    pricing_prosumer_today, None, None
                 )
                 avg_price_today = self._calculate_average_price(pricing_prosumer_today)
                 if avg_price_today is not None:
@@ -583,7 +560,7 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     else:
                         new_value = None
                     attributes[ATTR_PRICE_TOMORROW] = self._format_price_frames_for_attributes(
-                        pricing_prosumer_tomorrow, cheap_sale_thresh, expensive_sale_thresh
+                        pricing_prosumer_tomorrow, None, None
                     )
                 else:
                     new_value = None
@@ -591,7 +568,6 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     _LOGGER.debug(f"({self.name}) Brak danych o cenach sprzedaży na jutro, ustawiam stan na None i komunikat w atrybutach.")
                 if has_real_data_tomorrow_sale and (avg_price_tomorrow := self._calculate_average_price(pricing_prosumer_tomorrow)) is not None:
                     attributes[f"{ATTR_AVERAGE_PRICE}_tomorrow"] = avg_price_tomorrow
-
 
             elif self._sensor_key == SENSOR_CONSUMPTION_DAILY_COST:
                 cost_frames = meter_cost_data.get("frames") if meter_cost_data else None
@@ -605,7 +581,6 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                 if meter_usage_data:
                     attributes[ATTR_MONTHLY_KWH_CONSUMPTION] = meter_usage_data.get(USAGE_MONTHLY_FAE) 
                     attributes[ATTR_MONTHLY_PLN_COST] = meter_usage_data.get(USAGE_MONTHLY_FAE_COST) 
-
 
             elif self._sensor_key == SENSOR_PRODUCTION_DAILY_YIELD:
                 cost_frames = meter_cost_data.get("frames") if meter_cost_data else None
@@ -681,7 +656,7 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
             elif self._sensor_key == SENSOR_PRODUCTION_MONTHLY_KWH:
                 usage_frames = meter_usage_data.get("frames") if meter_usage_data else None
                 new_value, current_breakdown = self._aggregate_daily_data(
-                    usage_frames, USAGE_FRAME_RAE_KWH, current_month_dt # Główna wartość dla bieżącego miesiąca
+                    usage_frames, USAGE_FRAME_RAE_KWH, current_month_dt
                 )
                 if current_breakdown:
                     attributes[ATTR_DAILY_BREAKDOWN_CURRENT_MONTH] = current_breakdown
@@ -696,7 +671,7 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
             elif self._sensor_key == SENSOR_CONSUMPTION_MONTHLY_COST_PLN:
                 cost_frames = meter_cost_data.get("frames") if meter_cost_data else None
                 new_value, current_breakdown = self._aggregate_daily_data(
-                    cost_frames, COST_FRAME_FAE_COST, current_month_dt # Główna wartość dla bieżącego miesiąca
+                    cost_frames, COST_FRAME_FAE_COST, current_month_dt
                 )
                 if new_value is None and meter_usage_data:
                     monthly_cost = meter_usage_data.get(USAGE_MONTHLY_FAE_COST)
@@ -715,7 +690,7 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
             elif self._sensor_key == SENSOR_PRODUCTION_MONTHLY_YIELD_PLN:
                 cost_frames = meter_cost_data.get("frames") if meter_cost_data else None
                 new_value, current_breakdown = self._aggregate_daily_data(
-                    cost_frames, COST_FRAME_RAE_YIELD, current_month_dt # Główna wartość dla bieżącego miesiąca
+                    cost_frames, COST_FRAME_RAE_YIELD, current_month_dt
                 )
                 if new_value is None and meter_usage_data:
                     monthly_yield = meter_usage_data.get(USAGE_MONTHLY_RAE_YIELD)
@@ -746,7 +721,7 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                 attributes.pop(f"{ATTR_AVERAGE_PRICE}_tomorrow", None)
             self._attr_extra_state_attributes = {k: v for k, v in attributes.items() if v is not None and (not isinstance(v, list) or v)}
 
-        except Exception as e: # pragma: no cover
+        except Exception as e:
             _LOGGER.error(f"({self.name}) Błąd podczas aktualizacji stanu ({self._sensor_key}): {e}", exc_info=True)
             self._attr_native_value = None
             self._attr_extra_state_attributes = {
