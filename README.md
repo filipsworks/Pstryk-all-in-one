@@ -82,6 +82,9 @@ Jeśli napotkasz problemy, otwórz zgłoszenie (issue) w tym repozytorium: `http
 szkocot
 Zmiana by używać flag pstryka is_cheap/is_expensive zamiast twardo ustalonych wartości - filipsworks
 
+filipsworks
+Przeniesienie pobierania cen sprzedaży (prosumer) na nowy endpoint unified-metrics (parametr pricing) - filipsworks
+
 ## Licencja
 
 Ten projekt jest objęty licencją MIT. Szczegóły znajdziesz w pliku LICENSE.
