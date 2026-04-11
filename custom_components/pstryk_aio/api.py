@@ -401,7 +401,7 @@ class PstrykApiClientApiKey:
         return normalized_response
 
     def _normalize_unified_pricing_response(
-        self, response_data: Optional[Dict[str, Any]]
+        self, response_data: Optional[Dict[str, Any]], prosumer: bool = False
     ) -> Optional[Dict[str, Any]]:
         """Mapuje unified-metrics na płaski format cenowy."""
         if not isinstance(response_data, dict):
@@ -415,13 +415,21 @@ class PstrykApiClientApiKey:
             pricing_values = _pick_metric_container(
                 frame, UNIFIED_PRICING_RESPONSE_KEYS
             )
+            # Define keys based on whether we want prosumer or purchase prices
+            net_keys = (
+                ("price_prosumer_net",) if prosumer else ("price_net", "price_net_avg")
+            )
+            gross_keys = (
+                ("price_prosumer_gross",)
+                if prosumer
+                else ("price_gross", "price_gross_avg")
+            )
+
             normalized_frame: Dict[str, Any] = {
                 "start": frame.get("start"),
                 "end": frame.get("end"),
-                "price_net": _pick_value(pricing_values, "price_net", "price_net_avg"),
-                "price_gross": _pick_value(
-                    pricing_values, "price_gross", "price_gross_avg"
-                ),
+                "price_net": _pick_value(pricing_values, *net_keys),
+                "price_gross": _pick_value(pricing_values, *gross_keys),
                 "is_cheap": _pick_value(pricing_values, "is_cheap"),
                 "is_expensive": _pick_value(pricing_values, "is_expensive"),
             }
@@ -435,10 +443,16 @@ class PstrykApiClientApiKey:
         summary = _pick_metric_container(
             response_data.get("summary"), UNIFIED_PRICING_RESPONSE_KEYS
         )
+        # Define summary keys based on the flag
+        net_avg_keys = ("price_prosumer_net_avg",) if prosumer else ("price_net_avg",)
+        gross_avg_keys = (
+            ("price_prosumer_gross_avg",) if prosumer else ("price_gross_avg",)
+        )
+
         normalized_response: Dict[str, Any] = {
             "frames": normalized_frames,
-            "price_net_avg": _pick_value(summary, "price_net_avg"),
-            "price_gross_avg": _pick_value(summary, "price_gross_avg"),
+            "price_net_avg": _pick_value(summary, *net_avg_keys),
+            "price_gross_avg": _pick_value(summary, *gross_avg_keys),
         }
 
         if normalized_response["price_net_avg"] is None:
@@ -548,9 +562,10 @@ class PstrykApiClientApiKey:
                 window_start=window_start,
                 window_end=window_end,
             )
-            # Dane z unified-metrics są zagnieżdżone pod kluczem 'metrics',
-            # więc musimy je spłaszczyć za pomocą istniejącego normalizatora.
-            return self._normalize_unified_pricing_response(response_data)
+            # Przekazujemy flagę prosumer=True, aby wybrać właściwe pola ceny
+            return self._normalize_unified_pricing_response(
+                response_data, prosumer=True
+            )
         except Exception as e:
             _LOGGER.error(
                 f"Nie udało się pobrać danych cen sprzedaży (prosumer) z unified-metrics: {e}"
