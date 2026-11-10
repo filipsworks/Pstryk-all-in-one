@@ -58,7 +58,7 @@ class PstrykConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry: config_entries.ConfigEntry):
-        return PstrykOptionsFlowHandler(config_entry)
+        return PstrykOptionsFlowHandler()
 
     async def async_step_user(
         self, user_input: Optional[Dict[str, Any]] = None
@@ -158,9 +158,7 @@ class PstrykConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class PstrykOptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Inicjalizacja przepływu opcji."""
-        self.config_entry = config_entry
+    # self.config_entry ustawia Home Assistant (property bez settera od HA 2024.11).
 
     async def async_step_init(self, user_input: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """Obsługuje inicjalizację opcji."""
