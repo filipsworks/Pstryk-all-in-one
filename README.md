@@ -11,6 +11,7 @@ Integracja Home Assistant dla serwisu Pstryk.pl, zapewniająca dostęp do danych
 *   Saldo rozliczeniowe dzienne i miesięczne (w PLN i kWh).
 *   Atrybuty sensorów zawierające szczegółowy podział godzinowy/dzienny danych.
 *   Konfigurowalne progi taniej/drogiej energii.
+*   Atrybut `price_shield` w ramkach `today_prices`/`tomorrow_prices` cen zakupu: pełna cena brutto (z dystrybucją i podatkami), w której sama cena energii jest ograniczona tarczą (domyślnie 0.61 PLN/kWh brutto, zmiana w opcjach integracji).
 *   Konfiguracja za pomocą Klucza API.
 
 ## Instalacja

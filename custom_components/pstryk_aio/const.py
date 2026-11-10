@@ -4,6 +4,7 @@ DOMAIN = "pstryk_aio"
 PLATFORMS = ["sensor"] 
 # --- Konfiguracja ---
 CONF_API_KEY = "api_key" # Dla Klucza API
+CONF_PRICE_SHIELD = "price_shield" # Tarcza: maksymalna cena energii brutto (PLN/kWh)
 # CONF_CHEAP_PURCHASE_PRICE_THRESHOLD = "cheap_purchase_price_threshold"
 # CONF_EXPENSIVE_PURCHASE_PRICE_THRESHOLD = "expensive_purchase_price_threshold"
 # CONF_CHEAP_SALE_PRICE_THRESHOLD = "cheap_sale_price_threshold"
@@ -14,6 +15,7 @@ CONF_API_KEY = "api_key" # Dla Klucza API
 # Domyślne wartości
 DEFAULT_NAME = "Pstryk AIO"
 DEFAULT_UPDATE_INTERVAL_MINUTES = 15
+DEFAULT_PRICE_SHIELD = 0.61
 DEFAULT_CHEAP_PURCHASE_PRICE_THRESHOLD = 0.40 
 DEFAULT_EXPENSIVE_PURCHASE_PRICE_THRESHOLD = 0.80 
 DEFAULT_CHEAP_SALE_PRICE_THRESHOLD = 0.20 
@@ -86,6 +88,8 @@ ATTR_PRICE_VALUE_NET = "price_net"
 ATTR_PRICE_VALUE_GROSS = "price_gross"
 ATTR_PRICE_IS_CHEAP = "is_cheap"         # Flaga taniej ceny w ramce godzinowej
 ATTR_PRICE_IS_EXPENSIVE = "is_expensive"   # Flaga drogiej ceny w ramce godzinowej
+ATTR_PRICE_SHIELD = "price_shield"   # Pełna cena zakupu z ceną energii ograniczoną tarczą
+ATTR_PRICE_ENERGY_GROSS = "price_energy_gross"  # Cena samej energii brutto (wewnętrzne, nie trafia do atrybutów)
 ATTR_PRICE_UNIT = "PLN/kWh" 
 # Atrybuty dla sensorów zużycia/produkcji/kosztów
 ATTR_DAILY_KWH_CONSUMPTION = "daily_kwh_consumption" 

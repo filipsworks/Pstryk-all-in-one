@@ -7,6 +7,13 @@
         "data": {
           "api_key": "API Key"
         }
+      },
+      "options": {
+        "title": "Pstryk AIO Options",
+        "data": {
+          "update_interval": "Data Update Interval (minutes)",
+          "price_shield": "Price shield: max gross energy price (PLN/kWh)"
+        }
       }
     },
     "error": {
@@ -28,7 +35,8 @@
           "expensive_purchase_price_threshold": "Expensive Purchase Price Threshold",
           "cheap_sale_price_threshold": "Cheap Sale Price Threshold",
           "expensive_sale_price_threshold": "Expensive Sale Price Threshold",
-          "update_interval": "Data Update Interval (minutes)"
+          "update_interval": "Data Update Interval (minutes)",
+          "price_shield": "Price shield: max gross energy price (PLN/kWh)"
         }
       }
     },

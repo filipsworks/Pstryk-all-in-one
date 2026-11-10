@@ -433,6 +433,13 @@ class PstrykApiClientApiKey:
                 "is_cheap": _pick_value(pricing_values, "is_cheap"),
                 "is_expensive": _pick_value(pricing_values, "is_expensive"),
             }
+            if not prosumer:
+                # shortcut: cena energii = price_prosumer_gross (TGE brutto; zakup minus ta cena
+                # to stała dystrybucja/akcyza/VAT danej strefy). Gdy API poda osobne pole ceny
+                # energii zakupu, użyć go tutaj.
+                normalized_frame["price_energy_gross"] = _pick_value(
+                    pricing_values, "price_prosumer_gross"
+                )
             is_live = frame.get("is_live")
             if is_live is None:
                 is_live = _pick_value(pricing_values, "is_live")

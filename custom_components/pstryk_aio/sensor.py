@@ -95,10 +95,24 @@ from .const import (
     FRIENDLY_NAME_CONSUMPTION_MONTHLY_COST_PLN,
     FRIENDLY_NAME_PRODUCTION_MONTHLY_YIELD_PLN,
     ATTR_LAST_MONTH_VALUE,
+    ATTR_PRICE_SHIELD,
+    ATTR_PRICE_ENERGY_GROSS,
+    CONF_PRICE_SHIELD,
+    DEFAULT_PRICE_SHIELD,
 )
 from homeassistant.helpers.event import async_track_time_change
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _apply_price_shield(
+    price_gross: Optional[float], energy_gross: Optional[float], cap: float
+) -> Optional[float]:
+    """Pełna cena brutto z ceną samej energii ograniczoną do `cap` (dystrybucja, akcyza i VAT bez zmian)."""
+    if price_gross is None or energy_gross is None:
+        return None
+    return round(price_gross - max(0.0, energy_gross - cap), 7)
+
 
 SENSOR_DESCRIPTIONS_MAP = {
     SENSOR_TODAY_PURCHASE_PRICE: (FRIENDLY_NAME_PURCHASE_PRICE, SensorDeviceClass.MONETARY, None, ATTR_PRICE_UNIT, "mdi:transmission-tower-import"),
@@ -127,7 +141,8 @@ async def async_setup_entry(
 ) -> None:
     """Konfiguruje sensory Pstryk AIO na podstawie wpisu konfiguracyjnego."""
     coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR_KEY_MAIN]
-    config_entry_title = entry.title 
+    config_entry_title = entry.title
+    price_shield_cap = entry.options.get(CONF_PRICE_SHIELD, DEFAULT_PRICE_SHIELD)
 
     entities = []
     for sensor_key, (name_suffix, device_class, state_class, unit, icon) in SENSOR_DESCRIPTIONS_MAP.items():
@@ -142,6 +157,7 @@ async def async_setup_entry(
                 unit_of_measurement=unit,
                 icon=icon,
                 config_entry_title=config_entry_title,
+                price_shield_cap=price_shield_cap,
             )
         )
     
@@ -165,11 +181,13 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
         state_class: Optional[SensorStateClass],
         unit_of_measurement: Optional[str],
         icon: Optional[str],
-        config_entry_title: str, 
+        config_entry_title: str,
+        price_shield_cap: Optional[float] = None,
     ):
         """Inicjalizacja sensora."""
         super().__init__(coordinator)
         self._sensor_key = sensor_key
+        self._price_shield_cap = price_shield_cap
         self._attr_unique_id = f"{self._sensor_key}" 
         self._attr_name = f"{DEFAULT_NAME} {name_suffix}"
         self._attr_device_class = device_class
@@ -257,7 +275,8 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
         self, 
         pricing_data: Optional[Dict[str, Any]],
         cheap_threshold: Optional[float] = None,
-        expensive_threshold: Optional[float] = None
+        expensive_threshold: Optional[float] = None,
+        price_shield_cap: Optional[float] = None,
     ) -> List[Dict[str, Any]]:
         """Formatuje ramki cenowe do atrybutów, używając flag is_cheap i is_expensive z API."""
         formatted_frames = []
@@ -295,6 +314,10 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     ATTR_PRICE_IS_CHEAP: is_cheap_flag,
                     ATTR_PRICE_IS_EXPENSIVE: is_expensive_flag,
                 }
+                if price_shield_cap is not None:
+                    frame_info[ATTR_PRICE_SHIELD] = _apply_price_shield(
+                        price_value, frame.get(ATTR_PRICE_ENERGY_GROSS), price_shield_cap
+                    )
                 frame_info_cleaned = {k: v for k, v in frame_info.items() if v is not None}
                 formatted_frames.append(frame_info_cleaned)
             except Exception as e:
@@ -494,7 +517,7 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     new_value = None
                 
                 attributes[ATTR_PRICE_TODAY] = self._format_price_frames_for_attributes(
-                    pricing_purchase_today, None, None
+                    pricing_purchase_today, None, None, self._price_shield_cap
                 )
                 avg_price_today = self._calculate_average_price(pricing_purchase_today)
                 if avg_price_today is not None:
@@ -515,7 +538,7 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     else:
                         new_value = None
                     attributes[ATTR_PRICE_TOMORROW] = self._format_price_frames_for_attributes(
-                        pricing_purchase_tomorrow, None, None
+                        pricing_purchase_tomorrow, None, None, self._price_shield_cap
                     )
                 else:
                     new_value = None
