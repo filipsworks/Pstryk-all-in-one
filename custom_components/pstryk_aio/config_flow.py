@@ -17,6 +17,8 @@ from .const import (
     DOMAIN,
     DEFAULT_NAME,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
+    CONF_PRICE_SHIELD,
+    DEFAULT_PRICE_SHIELD,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -141,9 +143,13 @@ class PstrykConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         options_schema_dict = {
             vol.Optional(
-                "update_interval", 
+                "update_interval",
                 default=DEFAULT_UPDATE_INTERVAL_MINUTES
-            ): vol.Coerce(int)
+            ): vol.Coerce(int),
+            vol.Optional(
+                CONF_PRICE_SHIELD,
+                default=DEFAULT_PRICE_SHIELD
+            ): vol.All(vol.Coerce(float), vol.Range(min=0)),
         }
 
         return self.async_show_form(
@@ -166,7 +172,11 @@ class PstrykOptionsFlowHandler(config_entries.OptionsFlow):
             vol.Optional(
                 "update_interval", 
                 default=current_options.get("update_interval", DEFAULT_UPDATE_INTERVAL_MINUTES)
-            ): vol.Coerce(int)
+            ): vol.Coerce(int),
+            vol.Optional(
+                CONF_PRICE_SHIELD,
+                default=current_options.get(CONF_PRICE_SHIELD, DEFAULT_PRICE_SHIELD)
+            ): vol.All(vol.Coerce(float), vol.Range(min=0)),
         }
         return self.async_show_form(
             step_id="init", data_schema=vol.Schema(options_schema_dict), errors={}

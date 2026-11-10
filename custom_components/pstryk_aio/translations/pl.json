@@ -7,6 +7,13 @@
         "data": {
           "api_key": "Klucz API"
         }
+      },
+      "options": {
+        "title": "Opcje Pstryk AIO",
+        "data": {
+          "update_interval": "Interwał aktualizacji danych (w minutach)",
+          "price_shield": "Tarcza: maks. cena energii brutto (PLN/kWh)"
+        }
       }
     },
     "error": {
@@ -28,7 +35,8 @@
           "expensive_purchase_price_threshold": "Próg drogiej ceny zakupu",
           "cheap_sale_price_threshold": "Próg taniej ceny sprzedaży",
           "expensive_sale_price_threshold": "Próg drogiej ceny sprzedaży",
-          "update_interval": "Interwał aktualizacji danych (w minutach)"
+          "update_interval": "Interwał aktualizacji danych (w minutach)",
+          "price_shield": "Tarcza: maks. cena energii brutto (PLN/kWh)"
         }
       }
     },
