@@ -73,6 +73,7 @@ Integracja tworzy następujące sensory:
 *   `sensor.pstryk_aio_miesieczna_produkcja_energii_kwh`
 *   `sensor.pstryk_aio_miesieczne_koszty_zuzycia_energii_pln`
 *   `sensor.pstryk_aio_miesieczna_wartosc_produkcji_energii_pln`
+*   `sensor.pstryk_aio_miesieczna_srednia_cena_energii` – średnia cena brutto samej energii z opłatą handlową (PLN/kWh) w bieżącym miesiącu, bez dystrybucji i akcyzy
 
 ## Wsparcie
 

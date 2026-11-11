@@ -14,6 +14,7 @@ from .const import (
     API_REQUEST_HEADERS,
     API_TIMEOUT,
     API_UNIFIED_METRICS_PATH,
+    COST_FRAME_AVG_PRICE_KEYS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -342,6 +343,8 @@ class PstrykApiClientApiKey:
                     "net_cost",
                 ),
             }
+            for key in COST_FRAME_AVG_PRICE_KEYS:
+                normalized_frame[key] = cost_values.get(key)
             if frame.get("is_live") is not None:
                 normalized_frame["is_live"] = frame.get("is_live")
 

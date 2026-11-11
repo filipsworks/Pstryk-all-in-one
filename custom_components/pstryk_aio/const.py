@@ -64,6 +64,7 @@ SENSOR_CONSUMPTION_MONTHLY_KWH = "consumption_monthly_kwh"
 SENSOR_PRODUCTION_MONTHLY_KWH = "production_monthly_kwh"
 SENSOR_CONSUMPTION_MONTHLY_COST_PLN = "consumption_monthly_cost_pln"
 SENSOR_PRODUCTION_MONTHLY_YIELD_PLN = "production_monthly_yield_pln"
+SENSOR_AVG_ENERGY_PRICE_MONTHLY = "avg_energy_price_monthly"
 
 FRIENDLY_NAME_PURCHASE_PRICE = "Obecna cena zakupu prądu"  # Przywrócona nazwa
 FRIENDLY_NAME_SALE_PRICE = "Obecna cena sprzedaży prądu"    # Przywrócona nazwa
@@ -79,6 +80,7 @@ FRIENDLY_NAME_CONSUMPTION_MONTHLY_KWH = "Miesięczne zużycie energii (kWh)"
 FRIENDLY_NAME_PRODUCTION_MONTHLY_KWH = "Miesięczna produkcja energii (kWh)"
 FRIENDLY_NAME_CONSUMPTION_MONTHLY_COST_PLN = "Miesięczne koszty zużycia energii (PLN)"
 FRIENDLY_NAME_PRODUCTION_MONTHLY_YIELD_PLN = "Miesięczna wartość produkcji energii (PLN)"
+FRIENDLY_NAME_AVG_ENERGY_PRICE_MONTHLY = "Miesięczna średnia cena energii"
 # Atrybuty dla sensorów cenowych
 ATTR_PRICE_TODAY = "today_prices" 
 ATTR_PRICE_TOMORROW = "tomorrow_prices" 
@@ -121,4 +123,13 @@ USAGE_FRAME_RAE_KWH = "rae"
 COST_FRAME_FAE_COST = "fae_cost"
 COST_FRAME_RAE_YIELD = "energy_sold_value"
 COST_FRAME_ENERGY_BALANCE_VALUE = "energy_balance_value"
+# Składniki kosztu z ramek 'cost' potrzebne do średniej ceny energii brutto
+COST_FRAME_AVG_PRICE_KEYS = (
+    "energy_cost_net",
+    "service_cost_net",
+    "var_dist_cost_net",
+    "fix_dist_cost_net",
+    "power_fee_cost_net",
+    "vat",
+)
  

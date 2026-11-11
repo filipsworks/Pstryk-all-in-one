@@ -99,6 +99,9 @@ from .const import (
     ATTR_PRICE_ENERGY_GROSS,
     CONF_PRICE_SHIELD,
     DEFAULT_PRICE_SHIELD,
+    SENSOR_AVG_ENERGY_PRICE_MONTHLY,
+    FRIENDLY_NAME_AVG_ENERGY_PRICE_MONTHLY,
+    COST_FRAME_AVG_PRICE_KEYS,
 )
 from homeassistant.helpers.event import async_track_time_change
 
@@ -112,6 +115,23 @@ def _apply_price_shield(
     if price_gross is None or energy_gross is None:
         return None
     return round(price_gross - max(0.0, energy_gross - cap), 7)
+
+
+def _avg_energy_price_gross(
+    totals: Dict[str, Optional[float]], import_kwh: Optional[float]
+) -> Optional[float]:
+    """Średnia cena brutto samej energii z opłatą handlową (PLN/kWh).
+
+    Stawka VAT z danych: vat / (dystrybucja + energia + usługa + opłata mocowa); akcyza jest poza bazą VAT.
+    """
+    if totals.get("energy_cost_net") is None or not import_kwh:
+        return None
+    t = {key: totals.get(key) or 0.0 for key in COST_FRAME_AVG_PRICE_KEYS}
+    vat_base = sum(v for key, v in t.items() if key != "vat")
+    if not vat_base:
+        return None
+    energy_with_service = t["energy_cost_net"] + t["service_cost_net"]
+    return round(energy_with_service / import_kwh * (1 + t["vat"] / vat_base), 4)
 
 
 SENSOR_DESCRIPTIONS_MAP = {
@@ -131,6 +151,7 @@ SENSOR_DESCRIPTIONS_MAP = {
     SENSOR_PRODUCTION_MONTHLY_KWH: (FRIENDLY_NAME_PRODUCTION_MONTHLY_KWH, SensorDeviceClass.ENERGY, SensorStateClass.TOTAL, UnitOfEnergy.KILO_WATT_HOUR, "mdi:solar-panel-large"),
     SENSOR_CONSUMPTION_MONTHLY_COST_PLN: (FRIENDLY_NAME_CONSUMPTION_MONTHLY_COST_PLN, SensorDeviceClass.MONETARY, SensorStateClass.TOTAL, "PLN", "mdi:cash-minus"),
     SENSOR_PRODUCTION_MONTHLY_YIELD_PLN: (FRIENDLY_NAME_PRODUCTION_MONTHLY_YIELD_PLN, SensorDeviceClass.MONETARY, SensorStateClass.TOTAL, "PLN", "mdi:cash-plus"),
+    SENSOR_AVG_ENERGY_PRICE_MONTHLY: (FRIENDLY_NAME_AVG_ENERGY_PRICE_MONTHLY, SensorDeviceClass.MONETARY, None, ATTR_PRICE_UNIT, "mdi:cash-clock"),
 }
 
 
@@ -735,6 +756,18 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                 )
                 if last_month_total_pln is not None:
                     attributes[ATTR_LAST_MONTH_VALUE] = round(last_month_total_pln, 2)
+
+            elif self._sensor_key == SENSOR_AVG_ENERGY_PRICE_MONTHLY:
+                cost_frames = meter_cost_data.get("frames") if meter_cost_data else None
+                usage_frames = meter_usage_data.get("frames") if meter_usage_data else None
+                totals = {
+                    key: self._aggregate_daily_data(cost_frames, key, current_month_dt)[0]
+                    for key in COST_FRAME_AVG_PRICE_KEYS
+                }
+                import_kwh, _ = self._aggregate_daily_data(
+                    usage_frames, USAGE_FRAME_FAE_KWH, current_month_dt
+                )
+                new_value = _avg_energy_price_gross(totals, import_kwh)
 
             _LOGGER.debug(f"({self.name}) Przed ustawieniem _attr_native_value, new_value: '{new_value}' (typ: {type(new_value)})")
             self._attr_native_value = new_value
