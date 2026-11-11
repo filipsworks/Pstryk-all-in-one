@@ -768,6 +768,9 @@ class PstrykUniversalSensor(CoordinatorEntity, SensorEntity):
                     usage_frames, USAGE_FRAME_FAE_KWH, current_month_dt
                 )
                 new_value = _avg_energy_price_gross(totals, import_kwh)
+                if new_value is not None and self._price_shield_cap is not None:
+                    # Średnia cena energii po tarczy; różnica state - price_shield to rabat na kWh
+                    attributes[ATTR_PRICE_SHIELD] = round(min(new_value, self._price_shield_cap), 4)
 
             _LOGGER.debug(f"({self.name}) Przed ustawieniem _attr_native_value, new_value: '{new_value}' (typ: {type(new_value)})")
             self._attr_native_value = new_value

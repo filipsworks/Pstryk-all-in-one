@@ -162,10 +162,17 @@ cards:
                   let state_val;
                   let unit_val;
 
+                  // Tarcza: rabat na kWh, gdy średnia miesięczna cena energii przekracza tarczę
+                  const avgEnergy = states['sensor.pstryk_aio_miesieczna_srednia_cena_energii'];
+                  const shieldDiscount = avgEnergy && typeof avgEnergy.attributes.price_shield === 'number' && !isNaN(parseFloat(avgEnergy.state))
+                    ? Math.max(0, parseFloat(avgEnergy.state) - avgEnergy.attributes.price_shield) : 0;
+
                   if (isToday) {
                     const entityId = 'sensor.pstryk_aio_saldo_rozliczeniowe_dzienne_pln';
                     const entityState = states[entityId];
-                    state_val = entityState ? parseFloat(entityState.state).toFixed(2) : 'N/A';
+                    const kwhState = states['sensor.pstryk_aio_dzienne_zuzycie_energii_kwh'];
+                    const kwh = kwhState ? parseFloat(kwhState.state) || 0 : 0;
+                    state_val = entityState ? (parseFloat(entityState.state) - shieldDiscount * kwh).toFixed(2) : 'N/A';
                     unit_val = entityState && entityState.attributes.unit_of_measurement ? entityState.attributes.unit_of_measurement : 'zł';
                   } else { // Ten miesiąc
                     const currentMonthConsumptionCostEntityId = 'sensor.pstryk_aio_miesieczne_koszty_zuzycia_energii_pln';
@@ -181,7 +188,9 @@ cards:
 
                     if (currentMonthConsumptionCostState) {
                       const consumptionCostThisMonth = parseFloat(currentMonthConsumptionCostState.state);
-                      let finalBillingValue = consumptionCostThisMonth;
+                      const monthKwhState = states['sensor.pstryk_aio_miesieczne_zuzycie_energii_kwh'];
+                      const monthKwh = monthKwhState ? parseFloat(monthKwhState.state) || 0 : 0;
+                      let finalBillingValue = consumptionCostThisMonth - shieldDiscount * monthKwh;
 
                       if (shouldUseDeposit) {
                         let productionValueLastMonth = 0;
@@ -554,7 +563,13 @@ cards:
           const isToday = states['input_select.statystyki_czas'].state === 'Dziś';
           const entityId = isToday ? 'sensor.pstryk_aio_dzienne_koszty_zuzycia_energii' : 'sensor.pstryk_aio_miesieczne_koszty_zuzycia_energii_pln';
           const entityState = states[entityId];
-          const state = entityState ? parseFloat(entityState.state).toFixed(2) : 'N/A';
+          // Tarcza: rabat na kWh, gdy średnia miesięczna cena energii przekracza tarczę
+          const avgEnergy = states['sensor.pstryk_aio_miesieczna_srednia_cena_energii'];
+          const shieldDiscount = avgEnergy && typeof avgEnergy.attributes.price_shield === 'number' && !isNaN(parseFloat(avgEnergy.state))
+            ? Math.max(0, parseFloat(avgEnergy.state) - avgEnergy.attributes.price_shield) : 0;
+          const kwhState = states[isToday ? 'sensor.pstryk_aio_dzienne_zuzycie_energii_kwh' : 'sensor.pstryk_aio_miesieczne_zuzycie_energii_kwh'];
+          const kwh = kwhState ? parseFloat(kwhState.state) || 0 : 0;
+          const state = entityState ? (parseFloat(entityState.state) - shieldDiscount * kwh).toFixed(2) : 'N/A';
           const unit = entityState && entityState.attributes.unit_of_measurement ? entityState.attributes.unit_of_measurement : 'zł';
           return `
             <div style="
@@ -638,13 +653,17 @@ cards:
           let state = 'N/A';
           const unit = 'zł/kWh';
           const title = 'Śr. cena zakupu';
+          // Tarcza: rabat na kWh, gdy średnia miesięczna cena energii przekracza tarczę
+          const avgEnergy = states['sensor.pstryk_aio_miesieczna_srednia_cena_energii'];
+          const shieldDiscount = avgEnergy && typeof avgEnergy.attributes.price_shield === 'number' && !isNaN(parseFloat(avgEnergy.state))
+            ? Math.max(0, parseFloat(avgEnergy.state) - avgEnergy.attributes.price_shield) : 0;
 
           if (costEntityState && costEntityState.state && energyEntityState && energyEntityState.state) {
             const totalCost = parseFloat(costEntityState.state);
             const totalEnergy = parseFloat(energyEntityState.state);
 
             if (!isNaN(totalCost) && !isNaN(totalEnergy) && totalEnergy > 0) {
-              state = (totalCost / totalEnergy).toFixed(2);
+              state = (totalCost / totalEnergy - shieldDiscount).toFixed(2);
             } else if (!isNaN(totalCost) && !isNaN(totalEnergy) && totalEnergy === 0 && totalCost === 0) {
               state = (0).toFixed(2);
             }
